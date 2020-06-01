@@ -3,9 +3,10 @@ import { RequestHandler, Application } from 'express';
 
 import { mongoClient } from '../db';
 import { seedUsers } from '../db/api/seed/';
+import { startGraphQL } from '../graphql';
+
 import { startServer } from './server';
 import { formatResponse } from './utils';
-import { emptyArr } from 'src/utils/types';
 
 export const listenToRoute = () => {
 	const server = startServer(parseInt(process.env.SERVER_PORT as string, 10));
@@ -13,21 +14,7 @@ export const listenToRoute = () => {
 		res.send('HELLO');
 	});
 
-	server.get('/users', (_, res) => {
-		mongoClient
-			.db('test')
-			.collection('users')
-			.find({ name: /u/i })
-			.toArray()
-			.then(users => {
-				res.send(formatResponse(true, users));
-			})
-			.catch(error => {
-				res.status(500);
-				res.send(formatResponse(false, error));
-			});
-	});
-
+	startGraphQL();
 	setAdminRoutes(server);
 };
 
