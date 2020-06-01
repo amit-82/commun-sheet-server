@@ -14,7 +14,6 @@ export const listenToRoute = () => {
 		res.send('HELLO');
 	});
 
-	startGraphQL();
 	setAdminRoutes(server);
 };
 

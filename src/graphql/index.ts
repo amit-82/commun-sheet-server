@@ -1,6 +1,7 @@
 import { Application } from 'express';
 import { ApolloServer, gql } from 'apollo-server';
-import { getUsers } from '../db/api/users';
+import { getUsers, addUser } from '../db/api/users';
+import { Db } from 'mongodb';
 
 let apolloServer: ApolloServer;
 
@@ -13,18 +14,23 @@ const typeDefs = gql`
 	type Query {
 		users(name: String): [User]
 	}
+
+	type Mutation {
+		addUser(name: String): User
+	}
 `;
 
-const resolvers = {
-	Query: {
-		users: (_: any, { name }: { name: string }) => {
-			return getUsers(name);
-		},
-	},
-};
-
-export const startGraphQL = function () {
+export const startGraphQL = function (db: Db) {
 	if (!!apolloServer) return;
+
+	const resolvers = {
+		Query: {
+			users: (_: any, { name }: { name: string }) => getUsers(db, name),
+		},
+		Mutation: {
+			addUser: (_: any, { name }: { name: string }) => addUser(db, name),
+		},
+	};
 
 	apolloServer = new ApolloServer({
 		typeDefs,
