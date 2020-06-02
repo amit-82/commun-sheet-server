@@ -6,7 +6,7 @@ export interface CellData {
 }
 
 export interface Cell {
-	uid: string;
+	_id?: string;
 	x: string;
 	y: number;
 	data: CellData;
@@ -14,9 +14,9 @@ export interface Cell {
 }
 
 export interface Sheet {
-	uid: string;
+	_id?: string;
 	name: string;
-	createdAt: string;
+	createdAt: string | Date;
 }
 
 export interface User {

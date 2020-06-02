@@ -1,9 +1,8 @@
 import { InsertWriteOpResult } from 'mongodb';
 import { RequestHandler, Application } from 'express';
 
-import { getMongoClient } from '../db';
-import { seedUsers } from '../db/api/seed/';
-import { startGraphQL } from '../graphql';
+import { getMongoClient, getMongoDB } from 'src/db';
+import seedAll, { seedUsers } from 'src/db/api/seed/';
 
 import { startServer } from './server';
 import { formatResponse } from './utils';
@@ -33,12 +32,16 @@ const setAdminRoutes = (server: Application) => {
 	server.use(restrictIP);
 
 	// seed
+	server.get('/admin/seed/all', (_, res) => {
+		seedAll(getMongoDB()).then(result => {
+			res.send(formatResponse(true, result));
+		});
+	});
 	server.get('/admin/seed/users', (req, res) => {
 		const count = req.query.count ? parseInt(req.query.count as string, 10) : 10;
 
-		seedUsers(getMongoClient().db('test'), count).then((response: InsertWriteOpResult<any>) => {
-			const { ok, n: insertCount } = response.result;
-			res.send(formatResponse(ok === 1, insertCount));
+		seedUsers(getMongoDB(), count).then(users => {
+			res.send(formatResponse(true, users));
 		});
 	});
 };

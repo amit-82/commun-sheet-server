@@ -1,4 +1,3 @@
-import { Application } from 'express';
 import { ApolloServer, gql } from 'apollo-server';
 import { getUsers, addUser } from '../db/api/users';
 import { Db } from 'mongodb';
