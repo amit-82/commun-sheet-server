@@ -10,14 +10,16 @@ module.exports = {
 			{
 				test: /\.tsx?$/,
 				use: 'ts-loader',
-				exclude: /node_modules/,
+				exclude: [path.resolve(__dirname, 'node_modules')],
 			},
 		],
 	},
+	/*
 	resolve: {
 		modules: [path.join(__dirname, './src'), 'node_modules'],
 		extensions: ['.tsx', '.ts', '.js'],
 	},
+	*/
 	output: {
 		libraryTarget: 'commonjs',
 		filename: 'index.js',

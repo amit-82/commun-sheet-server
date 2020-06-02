@@ -1,6 +1,6 @@
 import { collections } from '../types';
 import { isEmpty } from '../../utils/input_validations';
-import { User } from 'src/data/types';
+import { User } from '../../data/types';
 import { Db } from 'mongodb';
 
 export const getUsers = async (db: Db, name: string) => {
