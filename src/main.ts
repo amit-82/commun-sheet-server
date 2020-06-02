@@ -4,7 +4,7 @@ dotenv.config();
 
 import { connectMongoClient } from './db';
 import { listenToRoute } from './routes';
-import { startGraphQL } from './graphql';
+import { startGraphQL, stopGraphQL } from './graphql';
 import { closeServer } from './routes/server';
 
 connectMongoClient()
@@ -19,6 +19,7 @@ connectMongoClient()
 
 if (module.hot) {
 	closeServer();
+	stopGraphQL();
 	module.hot.accept();
 	module.hot.dispose(() => console.log('Module disposed. '));
 }

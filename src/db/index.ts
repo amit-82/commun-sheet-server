@@ -1,6 +1,8 @@
 import { MongoClient } from 'mongodb';
 import { createMongoClientWithEnv } from './utils';
 
-export const mongoClient: MongoClient = createMongoClientWithEnv();
+const mongoClient: MongoClient = createMongoClientWithEnv();
+
+export const getMongoClient = () => mongoClient;
 
 export const connectMongoClient = async () => mongoClient.connect();

@@ -7,9 +7,6 @@
 		"build": "webpack --config webpack.production.js",
 		"build:watch": "webpack --config webpack.development.js",
 		"start": "node dist/server",
-		"xxxbuild": "webpack --mode=production",
-		"xxxbuild:dev": "webpack --mode=development",
-		"xxxstart": "nodemon --watch src/**/* --exec ts-node-dev src/index.ts",
 		"test": "jest"
 	},
 	"repository": {

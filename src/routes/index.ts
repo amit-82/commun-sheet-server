@@ -1,7 +1,7 @@
 import { InsertWriteOpResult } from 'mongodb';
 import { RequestHandler, Application } from 'express';
 
-import { mongoClient } from '../db';
+import { getMongoClient } from '../db';
 import { seedUsers } from '../db/api/seed/';
 import { startGraphQL } from '../graphql';
 
@@ -36,7 +36,7 @@ const setAdminRoutes = (server: Application) => {
 	server.get('/admin/seed/users', (req, res) => {
 		const count = req.query.count ? parseInt(req.query.count as string, 10) : 10;
 
-		seedUsers(mongoClient.db('test'), count).then((response: InsertWriteOpResult<any>) => {
+		seedUsers(getMongoClient().db('test'), count).then((response: InsertWriteOpResult<any>) => {
 			const { ok, n: insertCount } = response.result;
 			res.send(formatResponse(ok === 1, insertCount));
 		});

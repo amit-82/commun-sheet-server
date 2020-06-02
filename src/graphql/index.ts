@@ -2,6 +2,7 @@ import { Application } from 'express';
 import { ApolloServer, gql } from 'apollo-server';
 import { getUsers, addUser } from '../db/api/users';
 import { Db } from 'mongodb';
+import buildCollections from 'src/db/build_collections';
 
 let apolloServer: ApolloServer;
 
@@ -20,8 +21,16 @@ const typeDefs = gql`
 	}
 `;
 
+export const stopGraphQL = () => {
+	if (apolloServer) {
+		apolloServer.stop();
+	}
+};
+
 export const startGraphQL = function (db: Db) {
 	if (!!apolloServer) return;
+
+	buildCollections(db);
 
 	const resolvers = {
 		Query: {
