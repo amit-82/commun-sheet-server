@@ -1,6 +1,8 @@
+import http from 'http';
 import express from 'express';
 
-let app: express.Application;
+let app: express.Application | null;
+let server: http.Server | null;
 
 export const getServer = () => app;
 
@@ -10,9 +12,16 @@ export const startServer = (port: number) => {
 	}
 
 	app = express();
-	app.listen(port, () => {
+	server = app.listen(port, () => {
 		console.log(`Server listening on port ${port}`);
 	});
 
 	return app;
+};
+
+export const closeServer = () => {
+	if (!!app) {
+		server?.close();
+		app = server = null;
+	}
 };
