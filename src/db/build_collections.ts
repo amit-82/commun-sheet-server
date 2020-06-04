@@ -6,8 +6,28 @@ const buildCollections = async (db: Db) => {
 	db.collection(collections.users).createIndex({ name: 'text' });
 
 	await db.createCollection(collections.sheets);
+	await db.collection(collections.sheets).createIndex({ name: 'text' }, { unique: true });
+
 	await db.createCollection(collections.cells);
-	db.collection(collections.cells).createIndex({ x: 1, y: 1 });
+	await db.collection(collections.cells).createIndex(
+		{
+			x: 1,
+			y: 1,
+			sheet_id: 1,
+		},
+		{ unique: true }
+	);
+	/*
+	db.collection(collections.sheets).createIndex(
+		{
+			'cells.x': 1,
+			'cells.y': 1,
+			'cells.sheet_id': 1,
+		},
+		{ unique: true, partialFilterExpression: { 'cells.x': { $exists: true } } }
+	);
+*/
+	console.log('MongoDB collections built');
 };
 
 export default buildCollections;

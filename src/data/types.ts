@@ -1,16 +1,19 @@
-type CellDataType = 'number' | 'string' | 'computed';
+import { ObjectId } from 'mongodb';
+
+export type CellDataType = 'number' | 'string' | 'computed';
+export type CellDataContent = string | number;
 
 export interface CellData {
 	type: CellDataType;
-	content: string;
+	content: CellDataContent;
 }
 
 export interface Cell {
 	_id?: string;
-	x: string;
+	sheet_id: string | ObjectId;
+	x: number;
 	y: number;
-	data: CellData;
-	sheetId: string;
+	data?: CellData;
 }
 
 export interface Sheet {

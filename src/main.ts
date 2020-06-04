@@ -10,16 +10,17 @@ import { closeServer } from './routes/server';
 connectMongoClient()
 	.then((client: MongoClient) => {
 		console.log('mongoDB has connected successfully!');
-		listenToRoute();
 		startGraphQL(client.db(process.env.MONGO_DB));
+		listenToRoute();
 	})
 	.catch(error => {
 		console.error(error);
 	});
 
 if (module.hot) {
-	closeServer();
-	stopGraphQL();
 	module.hot.accept();
-	module.hot.dispose(() => console.log('Module disposed. '));
+	module.hot.dispose(() => {
+		closeServer();
+		stopGraphQL();
+	});
 }
