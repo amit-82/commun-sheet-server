@@ -3,10 +3,10 @@ import { collections } from './types';
 
 const buildCollections = async (db: Db) => {
 	await db.createCollection(collections.users);
-	db.collection(collections.users).createIndex({ name: 'text' });
+	db.collection(collections.users).createIndex({ name: 1 }, { unique: true });
 
 	await db.createCollection(collections.sheets);
-	await db.collection(collections.sheets).createIndex({ name: 'text' }, { unique: true });
+	await db.collection(collections.sheets).createIndex({ name: 1 }, { unique: true });
 
 	await db.createCollection(collections.cells);
 	await db.collection(collections.cells).createIndex(
