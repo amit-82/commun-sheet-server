@@ -3,9 +3,14 @@ import { isEmpty } from '../../utils/input_validations';
 import { User } from '../../data/types';
 import { Db } from 'mongodb';
 
-export const getUsers = async (db: Db, name: string) => {
+export const getUsers = async (db: Db, name: string, limit: number = 10) => {
 	const nameFilter = isEmpty(name) ? {} : { name: new RegExp(name, 'i') };
-	return db.collection(collections.users).find(nameFilter).toArray();
+	return db
+		.collection(collections.users)
+		.find(nameFilter)
+		.sort({ createdAt: -1 })
+		.limit(limit)
+		.toArray();
 };
 
 export const addUser = async (db: Db, name: string) => {

@@ -28,7 +28,7 @@ const typeDefs = gql`
 	}
 
 	type Query {
-		users(name: String): [User]
+		users(name: String, limit: Int = 3): [User]
 		sheets: [Sheet]
 		getCells(sheet_id: String, startX: Int, startY: Int, endX: Int, endY: Int): [Cell]
 	}
@@ -71,6 +71,10 @@ type named = {
 	name: string;
 };
 
+type namedAndLimit = named & {
+	limit?: number;
+};
+
 type hasPubSub = {
 	pubsub: PubSub;
 };
@@ -85,7 +89,7 @@ export const startGraphQL = function (db: Db) {
 	const resolvers = {
 		Query: {
 			// users
-			users: (_: any, { name }: named) => getUsers(db, name),
+			users: (_: any, { name, limit }: namedAndLimit) => getUsers(db, name, limit),
 			// sheets
 			sheets: (_: any) => getAll(db),
 
