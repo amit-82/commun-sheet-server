@@ -11,9 +11,9 @@ const buildCollections = async (db: Db) => {
 	await db.createCollection(collections.cells);
 	await db.collection(collections.cells).createIndex(
 		{
+			sheet_id: 1,
 			x: 1,
 			y: 1,
-			sheet_id: 1,
 		},
 		{ unique: true }
 	);

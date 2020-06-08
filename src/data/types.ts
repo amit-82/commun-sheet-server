@@ -22,7 +22,13 @@ export interface Sheet {
 	createdAt: string | Date;
 }
 
-export interface User {
+export interface UserIDless {
 	name: string;
+	login: boolean;
 	createdAt: string | Date;
+	loginAt: string | Date;
+}
+
+export interface User extends UserIDless {
+	_id: string;
 }

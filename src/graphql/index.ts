@@ -1,48 +1,13 @@
-import { ApolloServer, gql, PubSub } from 'apollo-server';
-import { getUsers, addUser } from '../db/api/users';
-import { Db, ObjectId } from 'mongodb';
+import { ApolloServer, PubSub } from 'apollo-server';
+import { getUsers, loginUser } from '../db/api/users';
+import { Db } from 'mongodb';
 import buildCollections from 'src/db/build_collections';
 import { setCell, validateSheetExists, getCells } from 'src/db/api/cells';
 import { CellDataType, User } from 'src/data/types';
 import { getAll, createSheet } from 'src/db/api/sheets';
+import typeDefs from './typeDefs';
 
 let apolloServer: ApolloServer | null;
-
-const typeDefs = gql`
-	type User {
-		_id: String
-		name: String
-		createdAt: String
-	}
-
-	type Sheet {
-		_id: String
-		name: String
-		createdAt: String
-	}
-
-	type Cell {
-		_id: String
-		x: Int
-		y: Int
-	}
-
-	type Query {
-		users(name: String, limit: Int = 3): [User]
-		sheets: [Sheet]
-		getCells(sheet_id: String, startX: Int, startY: Int, endX: Int, endY: Int): [Cell]
-	}
-
-	type Mutation {
-		addUser(name: String!): User
-		addSheet(name: String!): Sheet
-		setCell(sheet_id: String, x: Int, y: Int, data_type: String, data_content: String): Boolean
-	}
-
-	type Subscription {
-		newUser: User!
-	}
-`;
 
 export const stopGraphQL = () => {
 	if (apolloServer !== null) {
@@ -99,8 +64,8 @@ export const startGraphQL = function (db: Db) {
 		},
 		Mutation: {
 			// users
-			addUser: (_: any, { name }: named, { pubsub }: hasPubSub) => {
-				return addUser(db, name).then((user: User) => {
+			loginUser: (_: any, { name }: named, { pubsub }: hasPubSub) => {
+				return loginUser(db, name.toLowerCase()).then((user: User) => {
 					pubsub.publish(NEW_USER, { newUser: user });
 					return user;
 				});

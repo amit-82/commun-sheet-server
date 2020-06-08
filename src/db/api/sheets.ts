@@ -6,7 +6,7 @@ export const getAll = async (db: Db) => db.collection(collections.sheets).find({
 
 export const createSheet = async (db: Db, name: string) => {
 	const sheet: Sheet = {
-		name,
+		name: name.toLowerCase(),
 		createdAt: new Date(),
 	};
 
