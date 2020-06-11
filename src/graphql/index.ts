@@ -1,11 +1,14 @@
 import { ApolloServer, PubSub } from 'apollo-server';
-import { getUsers, loginUser } from '../db/api/users';
 import { Db } from 'mongodb';
+
 import buildCollections from 'src/db/build_collections';
 import { setCell, validateSheetExists, getCells } from 'src/db/api/cells';
-import { CellDataType, User } from 'src/data/types';
+import { CellDataType, User, Sheet } from 'src/data/types';
 import { getAll, createSheet } from 'src/db/api/sheets';
+
+import { getUsers, loginUser } from '../db/api/users';
 import typeDefs from './typeDefs';
+import { getOnlineUser, setOnlineUser, removeOnlineUser, getOnlineUsers } from './onlineUsers';
 
 let apolloServer: ApolloServer | null;
 
@@ -45,6 +48,7 @@ type hasPubSub = {
 };
 
 const NEW_USER = 'new_user';
+const NEW_SHEET = 'new_sheet';
 
 export const startGraphQL = function (db: Db) {
 	if (!!apolloServer) return;
@@ -55,6 +59,12 @@ export const startGraphQL = function (db: Db) {
 		Query: {
 			// users
 			users: (_: any, { name, limit }: namedAndLimit) => getUsers(db, name, limit),
+
+			onlineUsers: () => {
+				console.log(getOnlineUsers());
+				return getOnlineUsers();
+			},
+
 			// sheets
 			sheets: (_: any) => getAll(db),
 
@@ -66,13 +76,19 @@ export const startGraphQL = function (db: Db) {
 			// users
 			loginUser: (_: any, { name }: named, { pubsub }: hasPubSub) => {
 				return loginUser(db, name.toLowerCase()).then((user: User) => {
+					const onlineUser = setOnlineUser(user);
 					pubsub.publish(NEW_USER, { newUser: user });
-					return user;
+					return onlineUser;
 				});
 			},
 
 			// sheets
-			addSheet: (_: any, { name }: named) => createSheet(db, name),
+			addSheet: (_: any, { name }: named) => {
+				return createSheet(db, name).then((sheet: Sheet) => {
+					pubsub.publish(NEW_SHEET, { newSheet: sheet });
+					return sheet;
+				});
+			},
 
 			// cells
 			setCell: async (_: any, { sheet_id, x, y, data_type, data_content }: SetCell) => {
@@ -90,6 +106,10 @@ export const startGraphQL = function (db: Db) {
 			newUser: {
 				subscribe: (_: any, __: any, { pubsub }: hasPubSub) =>
 					pubsub.asyncIterator(NEW_USER),
+			},
+			newSheet: {
+				subscribe: (_: any, __: any, { pubsub }: hasPubSub) =>
+					pubsub.asyncIterator(NEW_SHEET),
 			},
 		},
 	};

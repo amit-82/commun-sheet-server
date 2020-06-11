@@ -2,7 +2,8 @@ import { Db } from 'mongodb';
 import { collections } from '../types';
 import { Sheet } from 'src/data/types';
 
-export const getAll = async (db: Db) => db.collection(collections.sheets).find({}).toArray();
+export const getAll = async (db: Db) =>
+	db.collection(collections.sheets).find({}).sort({ createdAt: -1 }).toArray();
 
 export const createSheet = async (db: Db, name: string) => {
 	const sheet: Sheet = {

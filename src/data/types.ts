@@ -32,3 +32,7 @@ export interface UserIDless {
 export interface User extends UserIDless {
 	_id: string;
 }
+
+export interface UserOnline extends User {
+	token: string;
+}
