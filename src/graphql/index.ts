@@ -8,7 +8,8 @@ import { getAll, createSheet } from 'src/db/api/sheets';
 
 import { getUsers, loginUser } from '../db/api/users';
 import typeDefs from './typeDefs';
-import { getOnlineUser, setOnlineUser, removeOnlineUser, getOnlineUsers } from './onlineUsers';
+import { logUser, getLoggedUsers, validateLogged } from './loggedUsers';
+import { namedAndLimit, named, Context } from './types';
 
 let apolloServer: ApolloServer | null;
 
@@ -35,18 +36,6 @@ type GetCells = {
 	endY: number;
 };
 
-type named = {
-	name: string;
-};
-
-type namedAndLimit = named & {
-	limit?: number;
-};
-
-type hasPubSub = {
-	pubsub: PubSub;
-};
-
 const NEW_USER = 'new_user';
 const NEW_SHEET = 'new_sheet';
 
@@ -58,15 +47,19 @@ export const startGraphQL = function (db: Db) {
 	const resolvers = {
 		Query: {
 			// users
-			users: (_: any, { name, limit }: namedAndLimit) => getUsers(db, name, limit),
+			users: (_: any, { name, limit }: namedAndLimit) => {
+				return getUsers(db, name, limit);
+			},
 
 			onlineUsers: () => {
-				console.log(getOnlineUsers());
-				return getOnlineUsers();
+				return getLoggedUsers();
 			},
 
 			// sheets
-			sheets: (_: any) => getAll(db),
+			sheets: (_: any, __: any, context: Context) => {
+				validateLogged(context);
+				return getAll(db);
+			},
 
 			// cells
 			getCells: (_: any, { sheet_id, startX, startY, endX, endY }: GetCells) =>
@@ -74,16 +67,16 @@ export const startGraphQL = function (db: Db) {
 		},
 		Mutation: {
 			// users
-			loginUser: (_: any, { name }: named, { pubsub }: hasPubSub) => {
+			loginUser: (_: any, { name }: named, { pubsub }: Context) => {
 				return loginUser(db, name.toLowerCase()).then((user: User) => {
-					const onlineUser = setOnlineUser(user);
+					const onlineUser = logUser(user);
 					pubsub.publish(NEW_USER, { newUser: user });
 					return onlineUser;
 				});
 			},
 
 			// sheets
-			addSheet: (_: any, { name }: named) => {
+			addSheet: (_: any, { name }: named, context: Context) => {
 				return createSheet(db, name).then((sheet: Sheet) => {
 					pubsub.publish(NEW_SHEET, { newSheet: sheet });
 					return sheet;
@@ -104,12 +97,13 @@ export const startGraphQL = function (db: Db) {
 
 		Subscription: {
 			newUser: {
-				subscribe: (_: any, __: any, { pubsub }: hasPubSub) =>
-					pubsub.asyncIterator(NEW_USER),
+				subscribe: (_: any, __: any, { pubsub }: Context) => pubsub.asyncIterator(NEW_USER),
 			},
 			newSheet: {
-				subscribe: (_: any, __: any, { pubsub }: hasPubSub) =>
-					pubsub.asyncIterator(NEW_SHEET),
+				subscribe: (_: any, __: any, { pubsub, req }: Context) => {
+					console.log('newSheet sub', req.headers);
+					return pubsub.asyncIterator(NEW_SHEET);
+				},
 			},
 		},
 	};
@@ -119,7 +113,17 @@ export const startGraphQL = function (db: Db) {
 	apolloServer = new ApolloServer({
 		typeDefs,
 		resolvers,
-		context: ({ req, res }) => ({ req, res, pubsub }),
+		context: ({ req, res }) => {
+			return { req, res, pubsub };
+		},
+		subscriptions: {
+			onConnect(_, __, context) {
+				//console.log('connect headers', context.request.headers);
+			},
+			onDisconnect(_, context) {
+				console.log('DISconnect headers', context.request.headers);
+			},
+		},
 	});
 
 	const port = process.env.GRAPHQL_PORT;
