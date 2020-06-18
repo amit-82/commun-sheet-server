@@ -113,7 +113,7 @@ export const startGraphQL = function (db: Db) {
 			},
 			newSheet: {
 				subscribe: (_: any, __: any, { pubsub, req }: Context) => {
-					console.log('newSheet sub', req.headers);
+					//console.log('newSheet sub', req.headers);
 					return pubsub.asyncIterator(NEW_SHEET);
 				},
 			},
