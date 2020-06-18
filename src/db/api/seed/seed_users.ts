@@ -14,7 +14,6 @@ const seedUsers = async (db: Db, count: number = 10) => {
 			name: faker.name.findName().toLowerCase(),
 			createdAt: date,
 			loginAt: date,
-			login: false,
 		});
 	}
 	const result = await db.collection(collections.users).insertMany(users);

@@ -1,6 +1,6 @@
-import { Db, FindOneAndUpdateOption, FindOneOptions, ObjectId } from 'mongodb';
+import { Db, FindOneAndUpdateOption } from 'mongodb';
 
-import { UserIDless, User } from 'src/data/types';
+import { User } from 'src/data/types';
 import { isEmpty } from 'src/utils/input_validations';
 import { collections } from '../types';
 
@@ -15,57 +15,30 @@ export const getUsers = async (db: Db, name: string, limit: number = 10) => {
 		.toArray();
 };
 
-const addUser = async (db: Db, name: string) => {
-	const date = new Date();
-	const user: UserIDless = {
-		name: name.toLowerCase(),
-		createdAt: date,
-		loginAt: date,
-		login: true,
-	};
-	return db
-		.collection(collections.users)
-		.insertOne(user)
-		.then(d => d.ops[0]);
-};
-
-export const loginUser = async (db: Db, name: string) => {
+export const loginUser = async (db: Db, name: string): Promise<User> => {
 	const opts: FindOneAndUpdateOption = {
+		upsert: true,
 		returnOriginal: false,
 	};
 
-	const existingUser: User | null = await db
-		.collection<User>(collections.users)
-		.findOne({ name }, {
-			projection: {
-				login: 1,
-			},
-		} as FindOneOptions);
-
-	if (!existingUser) {
-		return addUser(db, name);
-	}
-
-	if (existingUser.login) {
-		throw new Error('user already logged in');
-	}
+	const now = new Date();
+	const updatePipeline = {
+		$set: {
+			name,
+			loginAt: now,
+		},
+		$setOnInsert: {
+			createdAt: now,
+		},
+	};
 
 	return db
 		.collection(collections.users)
-		.findOneAndUpdate(
-			{ _id: new ObjectId(existingUser._id) },
-			{
-				$set: {
-					login: true,
-					loginAt: new Date(),
-				},
-			},
-			opts
-		)
-		.then(results => {
-			if (!results.ok) {
-				throw new Error('failed to login to existing user');
+		.findOneAndUpdate({ name }, updatePipeline, opts)
+		.then(result => {
+			if (!result.ok) {
+				throw new Error('failed to login');
 			}
-			return results.value;
+			return result.value;
 		});
 };

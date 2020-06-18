@@ -1,5 +1,6 @@
 import { Db } from 'mongodb';
 import { collections } from './types';
+import { systemLog } from 'src/log';
 
 const buildCollections = async (db: Db) => {
 	await db.createCollection(collections.users);
@@ -17,7 +18,7 @@ const buildCollections = async (db: Db) => {
 		},
 		{ unique: true }
 	);
-	console.log('MongoDB collections built');
+	systemLog.info('MongoDB collections built');
 };
 
 export default buildCollections;

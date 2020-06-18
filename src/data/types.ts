@@ -24,7 +24,6 @@ export interface Sheet {
 
 export interface UserIDless {
 	name: string;
-	login: boolean;
 	createdAt: string | Date;
 	loginAt: string | Date;
 }
@@ -35,4 +34,5 @@ export interface User extends UserIDless {
 
 export interface UserOnline extends User {
 	token: string;
+	pingTime: number;
 }

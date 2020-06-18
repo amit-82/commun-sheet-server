@@ -6,10 +6,11 @@ import { connectMongoClient } from './db';
 import { listenToRoute } from './routes';
 import { startGraphQL, stopGraphQL } from './graphql';
 import { closeServer } from './routes/server';
+import { systemLog } from './log';
 
 connectMongoClient()
 	.then((client: MongoClient) => {
-		console.log('mongoDB has connected successfully!');
+		systemLog.info('mongoDB has connected successfully');
 		startGraphQL(client.db(process.env.MONGO_DB));
 		listenToRoute();
 	})

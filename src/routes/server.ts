@@ -1,5 +1,6 @@
 import http from 'http';
 import express from 'express';
+import { systemLog } from 'src/log';
 
 let app: express.Application | null;
 let server: http.Server | null;
@@ -13,7 +14,7 @@ export const startServer = (port: number) => {
 
 	app = express();
 	server = app.listen(port, () => {
-		console.log(`Server listening on port ${port}`);
+		systemLog.info(`Server listening on port ${port}`);
 	});
 
 	return app;

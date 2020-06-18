@@ -5,10 +5,20 @@ import buildCollections from 'src/db/build_collections';
 import { setCell, validateSheetExists, getCells } from 'src/db/api/cells';
 import { CellDataType, User, Sheet } from 'src/data/types';
 import { getAll, createSheet } from 'src/db/api/sheets';
+import { systemLog } from 'src/log';
 
 import { getUsers, loginUser } from '../db/api/users';
 import typeDefs from './typeDefs';
-import { logUser, getLoggedUsers, validateLogged } from './loggedUsers';
+import {
+	logUser,
+	logoutUser,
+	getLoggedUsersIterator,
+	validateUserToken,
+	throwIfUserLoggedWithName,
+	initKillZombieInterval,
+	USER_TOKEN_KEY,
+	validateUserLogged,
+} from './loggedUsers';
 import { namedAndLimit, named, Context } from './types';
 
 let apolloServer: ApolloServer | null;
@@ -51,13 +61,11 @@ export const startGraphQL = function (db: Db) {
 				return getUsers(db, name, limit);
 			},
 
-			onlineUsers: () => {
-				return getLoggedUsers();
-			},
+			onlineUsers: (_: any, __: any, context: Context) => getLoggedUsersIterator(),
 
 			// sheets
 			sheets: (_: any, __: any, context: Context) => {
-				validateLogged(context);
+				validateUserToken(context);
 				return getAll(db);
 			},
 
@@ -67,16 +75,20 @@ export const startGraphQL = function (db: Db) {
 		},
 		Mutation: {
 			// users
-			loginUser: (_: any, { name }: named, { pubsub }: Context) => {
-				return loginUser(db, name.toLowerCase()).then((user: User) => {
-					const onlineUser = logUser(user);
-					pubsub.publish(NEW_USER, { newUser: user });
-					return onlineUser;
-				});
+			loginUser: async (_: any, { name }: named, context: Context) => {
+				validateUserToken(context);
+				throwIfUserLoggedWithName(name);
+
+				const user: User = await loginUser(db, name.toLowerCase().trim());
+				const onlineUser = logUser(user, context);
+				context.pubsub.publish(NEW_USER, { newUser: user });
+				return onlineUser;
 			},
 
 			// sheets
 			addSheet: (_: any, { name }: named, context: Context) => {
+				validateUserLogged(context);
+
 				return createSheet(db, name).then((sheet: Sheet) => {
 					pubsub.publish(NEW_SHEET, { newSheet: sheet });
 					return sheet;
@@ -113,15 +125,19 @@ export const startGraphQL = function (db: Db) {
 	apolloServer = new ApolloServer({
 		typeDefs,
 		resolvers,
-		context: ({ req, res }) => {
-			return { req, res, pubsub };
+		context: context => {
+			return { ...context, pubsub };
 		},
 		subscriptions: {
-			onConnect(_, __, context) {
-				//console.log('connect headers', context.request.headers);
+			onConnect(connectionParams, socket, context) {
+				//@ts-ignore
+				const token = connectionParams[USER_TOKEN_KEY];
+				(context as any)[USER_TOKEN_KEY] = token;
+				(socket as any)[USER_TOKEN_KEY] = token;
+				console.log('IN3', (context as any)[USER_TOKEN_KEY], connectionParams);
 			},
 			onDisconnect(_, context) {
-				console.log('DISconnect headers', context.request.headers);
+				logoutUser((context as unknown) as Context);
 			},
 		},
 	});
@@ -129,6 +145,7 @@ export const startGraphQL = function (db: Db) {
 	const port = process.env.GRAPHQL_PORT;
 
 	return apolloServer.listen({ port }).then(info => {
-		console.log(`Apollo GraphQL server running at ${info.url}`);
+		systemLog.info(`Apollo GraphQL server running at ${info.url}`);
+		initKillZombieInterval();
 	});
 };
