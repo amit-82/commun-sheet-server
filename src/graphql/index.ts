@@ -11,13 +11,13 @@ import { getUsers, loginUser } from '../db/api/users';
 import typeDefs from './typeDefs';
 import {
 	logUser,
-	logoutUser,
 	getLoggedUsersIterator,
 	validateUserToken,
-	throwIfUserLoggedWithName,
 	initKillZombieInterval,
 	USER_TOKEN_KEY,
 	validateUserLogged,
+	userDisconnect,
+	reviveDisconnectedUser,
 } from './loggedUsers';
 import { namedAndLimit, named, Context } from './types';
 
@@ -76,8 +76,12 @@ export const startGraphQL = function (db: Db) {
 		Mutation: {
 			// users
 			loginUser: async (_: any, { name }: named, context: Context) => {
-				validateUserToken(context);
-				throwIfUserLoggedWithName(name);
+				const token = validateUserToken(context);
+				let revivedUser = reviveDisconnectedUser(name, token);
+				if (revivedUser) {
+					context.pubsub.publish(NEW_USER, { newUser: revivedUser });
+					return revivedUser;
+				}
 
 				const user: User = await loginUser(db, name.toLowerCase().trim());
 				const onlineUser = logUser(user, context);
@@ -137,7 +141,8 @@ export const startGraphQL = function (db: Db) {
 				console.log('IN3', (context as any)[USER_TOKEN_KEY], connectionParams);
 			},
 			onDisconnect(_, context) {
-				logoutUser((context as unknown) as Context);
+				userDisconnect((context as unknown) as Context);
+				//logoutUser((context as unknown) as Context);
 			},
 		},
 	});

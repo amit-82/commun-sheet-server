@@ -34,5 +34,5 @@ export interface User extends UserIDless {
 
 export interface UserOnline extends User {
 	token: string;
-	pingTime: number;
+	disconnectTime: number;
 }
