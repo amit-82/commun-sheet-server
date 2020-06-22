@@ -65,7 +65,7 @@ export const startGraphQL = function (db: Db) {
 
 			// sheets
 			sheets: (_: any, __: any, context: Context) => {
-				validateUserToken(context);
+				validateUserLogged(context);
 				return getAll(db);
 			},
 
@@ -79,9 +79,11 @@ export const startGraphQL = function (db: Db) {
 				const token = validateUserToken(context);
 				let revivedUser = reviveDisconnectedUser(name, token);
 				if (revivedUser) {
+					console.log('REVIVED');
 					context.pubsub.publish(NEW_USER, { newUser: revivedUser });
 					return revivedUser;
 				}
+				console.log('NEW');
 
 				const user: User = await loginUser(db, name.toLowerCase().trim());
 				const onlineUser = logUser(user, context);
@@ -138,7 +140,6 @@ export const startGraphQL = function (db: Db) {
 				const token = connectionParams[USER_TOKEN_KEY];
 				(context as any)[USER_TOKEN_KEY] = token;
 				(socket as any)[USER_TOKEN_KEY] = token;
-				console.log('IN3', (context as any)[USER_TOKEN_KEY], connectionParams);
 			},
 			onDisconnect(_, context) {
 				userDisconnect((context as unknown) as Context);
